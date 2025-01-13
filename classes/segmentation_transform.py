@@ -1,6 +1,8 @@
 from torchvision import transforms
 from PIL import Image
 import random
+import torch
+import numpy as np
 
 class SegmentationTransform:
     def __init__(self, size=(256, 256), normalize=True, augment=False):
@@ -15,7 +17,8 @@ class SegmentationTransform:
             transforms.Normalize(mean=[0.485, 0.456, 0.406], std=[0.229, 0.224, 0.225]) if normalize else transforms.Lambda(lambda x: x)
         ])
 
-        self.mask_transform = transforms.ToTensor()
+        self.mask_transform = transforms.Lambda(lambda x: torch.tensor(np.array(x), dtype=torch.long))
+
 
     def __call__(self, image, mask):
         image = self.resize(image)

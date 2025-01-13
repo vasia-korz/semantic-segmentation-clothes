@@ -1,12 +1,31 @@
 import torch
+import torch.nn as nn
+import torch.optim as optim
 from tqdm import tqdm
+from segmentation_models_pytorch.losses import JaccardLoss, DiceLoss
 
 class ClothesModel:
-    def __init__(self, model, loss_fn, optimizer, device):
+    def __init__(self, model, loss_fn, optimizer, lr, device):
         self.device = device
         self.model = model.to(self.device)
-        self.loss_fn = loss_fn
-        self.optimizer = optimizer
+
+        if loss_fn == "CrossEntropy":
+            self.loss_fn = nn.CrossEntropyLoss()
+        elif loss_fn == "IOU":
+            self.loss_fn = JaccardLoss(mode='multiclass')
+        elif loss_fn == "Dice":
+            self.loss_fn = DiceLoss(mode='multiclass')
+        else:
+            raise ValueError(f"Unsupported loss function: {loss_fn}")
+        
+        if optimizer == "Adam":
+            self.optimizer = optim.Adam(self.model.parameters(), lr=lr)
+        elif optimizer == "SGD":
+            self.optimizer = optim.SGD(self.model.parameters(), lr=lr, momentum=0.9)
+        elif optimizer == "RMSprop":
+            self.optimizer = optim.RMSprop(self.model.parameters(), lr=lr, alpha=0.9)
+        else:
+            raise ValueError(f"Unsupported optimizer type: {optimizer}")
     
 
     def train(
@@ -28,7 +47,7 @@ class ClothesModel:
 
             # Training
             for images, masks in tqdm(
-                train_loader, desc=f"{epoch+1}/{epochs} Training", leave=False
+                train_loader, desc=f"{epoch+1}/{epochs} Training", leave=True
             ):
                 train_loss += self._train_batch(images, masks)
 
@@ -40,7 +59,7 @@ class ClothesModel:
             val_loss = 0.0
             with torch.no_grad():
                 for images, masks in tqdm(
-                    val_loader, desc=f"{epoch+1}/{epochs} Validation", leave=False
+                    val_loader, desc=f"{epoch+1}/{epochs} Validation", leave=True
                 ):
                     val_loss += self._val_batch(images, masks)
 
@@ -68,7 +87,7 @@ class ClothesModel:
         test_loss = 0.0
 
         for images, masks in tqdm(
-            test_loader, desc="Evaluation", leave=False
+            test_loader, desc="Evaluation", leave=True
         ):
             test_loss += self._val_batch(images, masks)
         

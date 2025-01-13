@@ -1,4 +1,5 @@
 import matplotlib.pyplot as plt
+from matplotlib.colors import ListedColormap
 import torch
 
 def visualize(pair):
@@ -19,7 +20,7 @@ def visualize(pair):
     plt.show()
 
 
-def visualize_prediction(model, dataset_sample, device, class_labels=None):
+def visualize_prediction(model, dataset_sample, device, class_labels=None, num_classes=59):
     image, mask = dataset_sample
 
     image = image.unsqueeze(0).to(device)
@@ -29,6 +30,8 @@ def visualize_prediction(model, dataset_sample, device, class_labels=None):
         output = model(image)
     predicted_mask = torch.argmax(output, dim=1).squeeze(0).cpu().numpy()
 
+    colormap = ListedColormap(plt.cm.get_cmap('tab20b', num_classes).colors)
+
     plt.figure(figsize=(15, 5))
 
     plt.subplot(1, 3, 1)
@@ -37,12 +40,12 @@ def visualize_prediction(model, dataset_sample, device, class_labels=None):
     plt.axis("off")
 
     plt.subplot(1, 3, 2)
-    plt.imshow(mask.cpu().numpy())
+    plt.imshow(mask.cpu().numpy(), cmap=colormap, vmin=0, vmax=num_classes - 1)
     plt.title("Ground Truth")
     plt.axis("off")
 
     plt.subplot(1, 3, 3)
-    plt.imshow(predicted_mask)
+    plt.imshow(predicted_mask, cmap=colormap, vmin=0, vmax=num_classes - 1)
     plt.title("Predicted")
     plt.axis("off")
 

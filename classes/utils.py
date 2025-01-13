@@ -34,6 +34,7 @@ def visualize_prediction(model, dataset_sample, device, class_labels=None, num_c
     hues = np.linspace(0, 1, num_classes, endpoint=False)
     saturation, value = 0.65, 0.85
     colors = hsv_to_rgb(np.stack([hues, np.full_like(hues, saturation), np.full_like(hues, value)], axis=1))
+    colors[0] = hsv_to_rgb([0, 0.1, 0.99])
     colormap = ListedColormap(colors)
 
     plt.figure(figsize=(15, 5))

@@ -1,4 +1,6 @@
 main.ipynb
+.venv/
+*.egg-info/
 /classes/__pycache__
 /data
 /models

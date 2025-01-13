@@ -109,7 +109,7 @@ class ClothesModel:
 
         # Forward
         outputs = self.model(images)
-        loss = self.loss_fn(outputs, masks.long())
+        loss = self.loss_fn(outputs, masks)
 
         # Backward
         self.optimizer.zero_grad()
@@ -122,6 +122,6 @@ class ClothesModel:
     def _val_batch(self, images, masks):
         images, masks = images.to(self.device), masks.to(self.device)
         outputs = self.model(images)
-        loss = self.loss_fn(outputs, masks.long())
+        loss = self.loss_fn(outputs, masks)
 
         return loss.item()

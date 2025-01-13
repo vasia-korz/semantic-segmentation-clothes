@@ -17,7 +17,6 @@ class SegmentationTransform:
 
         self.mask_transform = transforms.ToTensor()
 
-
     def __call__(self, image, mask):
         image = self.resize(image)
         mask = self.resize(mask)
@@ -27,7 +26,6 @@ class SegmentationTransform:
             mask = transforms.functional.hflip(mask)
 
         image = self.image_transform(image)
-        mask = self.mask_transform(mask)
-        mask = mask.squeeze(0)
+        mask = self.mask_transform(mask).squeeze(0)
 
         return image, mask

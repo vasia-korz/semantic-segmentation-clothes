@@ -8,7 +8,13 @@ class ClothesModel:
     def __init__(self, model, loss_fn, optimizer, lr, device):
         self.device = device
         self.model = model.to(self.device)
+        self.loss_fn = None
+        self.optimizer = None
+        self.set_loss_fn(loss_fn)
+        self.set_optimizer(optimizer, lr)
+    
 
+    def set_loss_fn(self, loss_fn):
         if loss_fn == "CrossEntropy":
             self.loss_fn = nn.CrossEntropyLoss()
         elif loss_fn == "IOU":
@@ -17,7 +23,9 @@ class ClothesModel:
             self.loss_fn = DiceLoss(mode='multiclass')
         else:
             raise ValueError(f"Unsupported loss function: {loss_fn}")
-        
+
+
+    def set_optimizer(self, optimizer, lr):
         if optimizer == "Adam":
             self.optimizer = optim.Adam(self.model.parameters(), lr=lr)
         elif optimizer == "SGD":
@@ -26,7 +34,7 @@ class ClothesModel:
             self.optimizer = optim.RMSprop(self.model.parameters(), lr=lr, alpha=0.9)
         else:
             raise ValueError(f"Unsupported optimizer type: {optimizer}")
-    
+
 
     def train(
             self,
@@ -101,7 +109,7 @@ class ClothesModel:
 
 
     def load_model(self, path):
-        self.model.load_state_dict(torch.load(path, map_location=self.device))
+        self.model.load_state_dict(torch.load(path, map_location=self.device, weights_only=True))
 
     
     def _train_batch(self, images, masks):

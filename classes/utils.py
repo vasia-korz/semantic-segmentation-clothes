@@ -1,5 +1,6 @@
 import matplotlib.pyplot as plt
-from matplotlib.colors import ListedColormap
+from matplotlib.colors import hsv_to_rgb, ListedColormap
+import numpy as np
 import torch
 
 def visualize(pair):
@@ -30,7 +31,10 @@ def visualize_prediction(model, dataset_sample, device, class_labels=None, num_c
         output = model(image)
     predicted_mask = torch.argmax(output, dim=1).squeeze(0).cpu().numpy()
 
-    colormap = ListedColormap(plt.cm.get_cmap('tab20b', num_classes).colors)
+    hues = np.linspace(0, 1, num_classes, endpoint=False)
+    saturation, value = 0.65, 0.85
+    colors = hsv_to_rgb(np.stack([hues, np.full_like(hues, saturation), np.full_like(hues, value)], axis=1))
+    colormap = ListedColormap(colors)
 
     plt.figure(figsize=(15, 5))
 

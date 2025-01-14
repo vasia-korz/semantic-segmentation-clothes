@@ -1,51 +1,66 @@
+from typing import Any, Literal
+
 import torch
 import torch.nn as nn
 import torch.optim as optim
+from segmentation_models_pytorch.losses import DiceLoss, JaccardLoss
+from torch._prims_common import DeviceLikeType
+from torch.utils.data import DataLoader
 from tqdm import tqdm
-from segmentation_models_pytorch.losses import JaccardLoss, DiceLoss
+
+LossType = Literal["CrossEntropy"] | Literal["IOU"] | Literal["Dice"]
+OptimType = Literal["Adam"] | Literal["SGD"] | Literal["RMSprop"]
+
 
 class ClothesModel:
-    def __init__(self, model, loss_fn, optimizer, lr, device):
+    def __init__(
+        self,
+        model: Any,
+        loss_fn: LossType,
+        optimizer: OptimType,
+        lr: float,
+        device: DeviceLikeType,
+    ) -> None:
         self.device = device
         self.model = model.to(self.device)
         self.loss_fn = None
         self.optimizer = None
         self.set_loss_fn(loss_fn)
         self.set_optimizer(optimizer, lr)
-    
 
-    def set_loss_fn(self, loss_fn):
+    def set_loss_fn(self, loss_fn: LossType) -> None:
         if loss_fn == "CrossEntropy":
             self.loss_fn = nn.CrossEntropyLoss()
         elif loss_fn == "IOU":
-            self.loss_fn = JaccardLoss(mode='multiclass')
+            self.loss_fn = JaccardLoss(mode="multiclass")
         elif loss_fn == "Dice":
-            self.loss_fn = DiceLoss(mode='multiclass')
+            self.loss_fn = DiceLoss(mode="multiclass")
         else:
             raise ValueError(f"Unsupported loss function: {loss_fn}")
 
-
-    def set_optimizer(self, optimizer, lr):
+    def set_optimizer(self, optimizer: OptimType, lr: float) -> None:
         if optimizer == "Adam":
             self.optimizer = optim.Adam(self.model.parameters(), lr=lr)
         elif optimizer == "SGD":
-            self.optimizer = optim.SGD(self.model.parameters(), lr=lr, momentum=0.9)
+            self.optimizer = optim.SGD(
+                self.model.parameters(), lr=lr, momentum=0.9
+            )
         elif optimizer == "RMSprop":
-            self.optimizer = optim.RMSprop(self.model.parameters(), lr=lr, alpha=0.9)
+            self.optimizer = optim.RMSprop(
+                self.model.parameters(), lr=lr, alpha=0.9
+            )
         else:
             raise ValueError(f"Unsupported optimizer type: {optimizer}")
 
-
     def train(
-            self,
-            train_loader, 
-            val_loader, 
-            epochs=5, 
-            load_best_at_end=True, 
-            patience=None
-            ):
-        
-        best_loss = float('inf')
+        self,
+        train_loader: DataLoader,
+        val_loader: DataLoader,
+        epochs: int = 5,
+        load_best_at_end: bool = True,
+        patience: int | None = None,
+    ) -> None:
+        best_loss = float("inf")
         best_model_dict = None
         no_improvement = 0
 
@@ -55,24 +70,26 @@ class ClothesModel:
 
             # Training
             for images, masks in tqdm(
-                train_loader, desc=f"{epoch+1}/{epochs} Training", leave=True
+                train_loader, desc=f"{epoch + 1}/{epochs} Training", leave=True
             ):
                 train_loss += self._train_batch(images, masks)
 
             train_loss /= len(train_loader)
-            print(f"{epoch+1}/{epochs} Training Loss: {train_loss}")
+            print(f"{epoch + 1}/{epochs} Training Loss: {train_loss}")
 
             # Validation
             self.model.eval()
             val_loss = 0.0
             with torch.no_grad():
                 for images, masks in tqdm(
-                    val_loader, desc=f"{epoch+1}/{epochs} Validation", leave=True
+                    val_loader,
+                    desc=f"{epoch + 1}/{epochs} Validation",
+                    leave=True,
                 ):
                     val_loss += self._val_batch(images, masks)
 
             val_loss /= len(val_loader)
-            print(f"{epoch+1}/{epochs} Validation Loss: {val_loss}")
+            print(f"{epoch + 1}/{epochs} Validation Loss: {val_loss}")
 
             # Callbacks
             if best_loss > val_loss:
@@ -85,34 +102,33 @@ class ClothesModel:
             if patience and no_improvement > patience:
                 print(f"The model hasn't improved since {patience} epochs")
                 break
-        
+
         if load_best_at_end and best_model_dict:
             self.model.load_state_dict(best_model_dict)
 
-
     @torch.no_grad()
-    def evaluate(self, test_loader):
+    def evaluate(self, test_loader: DataLoader) -> float:
         test_loss = 0.0
 
-        for images, masks in tqdm(
-            test_loader, desc="Evaluation", leave=True
-        ):
+        for images, masks in tqdm(test_loader, desc="Evaluation", leave=True):
             test_loss += self._val_batch(images, masks)
-        
+
         test_loss /= len(test_loader)
 
         return test_loss
-    
 
-    def save_model(self, path):
+    def save_model(self, path: str) -> None:
         torch.save(self.model.state_dict(), path)
 
+    def load_model(self, path: str) -> None:
+        self.model.load_state_dict(
+            torch.load(path, map_location=self.device, weights_only=True)
+        )
 
-    def load_model(self, path):
-        self.model.load_state_dict(torch.load(path, map_location=self.device, weights_only=True))
+    def _train_batch(self, images: Any, masks: Any) -> float:
+        assert self.loss_fn
+        assert self.optimizer
 
-    
-    def _train_batch(self, images, masks):
         images, masks = images.to(self.device), masks.to(self.device)
 
         # Forward
@@ -125,9 +141,10 @@ class ClothesModel:
         self.optimizer.step()
 
         return loss.item()
-    
 
-    def _val_batch(self, images, masks):
+    def _val_batch(self, images: Any, masks: Any) -> float:
+        assert self.loss_fn
+
         images, masks = images.to(self.device), masks.to(self.device)
         outputs = self.model(images)
         loss = self.loss_fn(outputs, masks)

@@ -23,8 +23,8 @@ class SegmentationModel(ClothesModel, ABC):
         )
         super().__init__(model, loss_fn, optimizer, lr, device)
 
-    @abstractmethod
     @staticmethod
+    @abstractmethod
     def architecture() -> type:
         ...
 

@@ -70,6 +70,35 @@ def visualize_prediction(
             print(f"{idx}: {label}")
 
 
+def plot_history(history):
+    num_metrics = len(history.get('val_metrics', {}))
+    total_plots = 1 + num_metrics
+    
+    _, axes = plt.subplots(1, total_plots, figsize=(5 * total_plots, 5))
+    
+    if total_plots == 1:
+        axes = [axes]
+
+    axes[0].plot(history['train_loss'], label='Train Loss', marker='o')
+    axes[0].plot(history['val_loss'], label='Validation Loss', marker='o')
+    axes[0].set_xlabel('Epochs')
+    axes[0].set_ylabel('Loss')
+    axes[0].set_title('Training and Validation Loss')
+    axes[0].legend()
+    axes[0].grid(True)
+
+    for idx, (metric_name, values) in enumerate(history.get('val_metrics', {}).items(), start=1):
+        axes[idx].plot(values, label=f'Validation {metric_name.capitalize()}', marker='o')
+        axes[idx].set_xlabel('Epochs')
+        axes[idx].set_ylabel(metric_name.capitalize())
+        axes[idx].set_title(f'Validation {metric_name.capitalize()}')
+        axes[idx].legend()
+        axes[idx].grid(True)
+
+    plt.tight_layout()
+    plt.show()
+
+
 def _get_custom_colormap(num_classes: int) -> ListedColormap:
     hues = np.linspace(0, 1, num_classes, endpoint=False)
     saturation, value = 0.65, 0.85

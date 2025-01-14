@@ -33,12 +33,12 @@ class UNetModel(SegmentationModel):
     @staticmethod
     def architecture() -> type:
         return smp.Unet
+    
 
-
-class DeepLabModel(SegmentationModel):
+class UnetPlusPlusModel(SegmentationModel):
     @staticmethod
     def architecture() -> type:
-        return smp.DeepLabV3Plus
+        return smp.UnetPlusPlus
 
 
 class FPNModel(SegmentationModel):
@@ -47,13 +47,49 @@ class FPNModel(SegmentationModel):
         return smp.FPN
 
 
-class LinkNetModel(SegmentationModel):
+class PSPNetModel(SegmentationModel):
+    @staticmethod
+    def architecture() -> type:
+        return smp.PSPNet
+
+
+class DeepLabV3Model(SegmentationModel):
+    @staticmethod
+    def architecture() -> type:
+        return smp.DeepLabV3
+    
+
+class DeepLabV3PlusModel(SegmentationModel):
+    @staticmethod
+    def architecture() -> type:
+        return smp.DeepLabV3Plus
+
+
+class LinknetModel(SegmentationModel):
     @staticmethod
     def architecture() -> type:
         return smp.Linknet
 
 
-class PSPNetModel(SegmentationModel):
+class MAnetModel(SegmentationModel):
     @staticmethod
     def architecture() -> type:
-        return smp.PSPNet
+        return smp.MAnet
+
+
+class PANModel(SegmentationModel):
+    @staticmethod
+    def architecture() -> type:
+        return smp.PAN
+
+
+class UPerNetModel(SegmentationModel):
+    @staticmethod
+    def architecture() -> type:
+        return smp.UPerNet
+
+
+class SegformerModel(SegmentationModel):
+    @staticmethod
+    def architecture() -> type:
+        return smp.Segformer

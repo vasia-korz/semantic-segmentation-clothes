@@ -119,7 +119,11 @@ class ClothesModel:
             history["val_loss"].append(train_loss)
             for i, metric in enumerate(list(self.metrics.keys())):
                 history["val_metrics"][metric].append(metrics_loss[i])
-            print(f"{epoch + 1}/{epochs} Validation Loss: {val_loss}")
+
+            print(f"{epoch + 1}/{epochs} Validation Loss: {val_loss}", end='')
+            for i, metric in enumerate(list(self.metrics.keys())):
+                print(f"; {metric}: {history["val_metrics"][metric][-1]}", end='')
+            print()
 
             # Callbacks
             if best_loss > val_loss:

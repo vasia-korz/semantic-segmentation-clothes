@@ -18,8 +18,8 @@ class ClothesModel:
         model: Any,
         loss_fn: LossType,
         optimizer: OptimType,
-        lr: float,
         device: DeviceLikeType,
+        lr: float,
     ) -> None:
         self.device = device
         self.model = model.to(self.device)

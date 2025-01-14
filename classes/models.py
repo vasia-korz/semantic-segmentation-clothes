@@ -11,8 +11,8 @@ class SegmentationModel(ClothesModel, ABC):
         self,
         loss_fn: LossType,
         optimizer: OptimType,
-        lr: float,
         device: DeviceLikeType,
+        lr: float = 1e-4,
         encoder: str = "resnet34",
     ) -> None:
         model = self.architecture()(
@@ -21,7 +21,7 @@ class SegmentationModel(ClothesModel, ABC):
             in_channels=3,  # RGB input
             classes=59,  # Number of classes
         )
-        super().__init__(model, loss_fn, optimizer, lr, device)
+        super().__init__(model, loss_fn, optimizer, device, lr)
 
     @staticmethod
     @abstractmethod
@@ -29,7 +29,7 @@ class SegmentationModel(ClothesModel, ABC):
         ...
 
 
-class UNetModel(SegmentationModel):
+class UnetModel(SegmentationModel):
     @staticmethod
     def architecture() -> type:
         return smp.Unet

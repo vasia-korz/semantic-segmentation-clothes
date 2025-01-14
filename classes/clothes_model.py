@@ -122,7 +122,7 @@ class ClothesModel:
 
             print(f"{epoch + 1}/{epochs} Validation Loss: {val_loss}", end='')
             for i, metric in enumerate(list(self.metrics.keys())):
-                print(f"; {metric}: {history["val_metrics"][metric][-1]}", end='')
+                print(f"; {metric}: {history['val_metrics'][metric][-1]}", end='')
             print()
 
             # Callbacks

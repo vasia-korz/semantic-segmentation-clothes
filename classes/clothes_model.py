@@ -24,28 +24,41 @@ class ClothesModel:
         self.device = device
         self.model = model.to(self.device)
         self.loss_fn = None
+        self.metrics = None
         self.optimizer = None
         self.set_loss_fn(loss_fn)
         self.set_optimizer(optimizer, lr)
 
     def set_loss_fn(self, loss_fn: LossType) -> None:
-        if loss_fn == "CrossEntropy":
+        if loss_fn == "crossentropy":
             self.loss_fn = nn.CrossEntropyLoss()
-        elif loss_fn == "IOU":
+            self.metrics = {
+                "iou": JaccardLoss(mode="multiclass"),
+                "dice": DiceLoss(mode="multiclass")
+            }
+        elif loss_fn == "iou":
             self.loss_fn = JaccardLoss(mode="multiclass")
-        elif loss_fn == "Dice":
+            self.metrics = {
+                "crossentropy": nn.CrossEntropyLoss(),
+                "dice": DiceLoss(mode="multiclass")
+            }
+        elif loss_fn == "dice":
             self.loss_fn = DiceLoss(mode="multiclass")
+            self.metrics = {
+                "crossentropy": nn.CrossEntropyLoss(),
+                "iou": JaccardLoss(mode="multiclass")
+            }
         else:
             raise ValueError(f"Unsupported loss function: {loss_fn}")
 
     def set_optimizer(self, optimizer: OptimType, lr: float) -> None:
-        if optimizer == "Adam":
+        if optimizer == "adam":
             self.optimizer = optim.Adam(self.model.parameters(), lr=lr)
-        elif optimizer == "SGD":
+        elif optimizer == "sgd":
             self.optimizer = optim.SGD(
                 self.model.parameters(), lr=lr, momentum=0.9
             )
-        elif optimizer == "RMSprop":
+        elif optimizer == "rmsprop":
             self.optimizer = optim.RMSprop(
                 self.model.parameters(), lr=lr, alpha=0.9
             )
@@ -63,6 +76,14 @@ class ClothesModel:
         best_loss = float("inf")
         best_model_dict = None
         no_improvement = 0
+        n_metrics = len(list(self.metrics.keys()))
+        history = {
+            "train_loss": [],
+            "val_loss": [],
+            "val_metrics": {
+                list(self.metrics.keys())[i]: [] for i in range(n_metrics)
+            }
+        }
 
         for epoch in range(epochs):
             self.model.train()
@@ -75,11 +96,13 @@ class ClothesModel:
                 train_loss += self._train_batch(images, masks)
 
             train_loss /= len(train_loader)
+            history["train_loss"].append(train_loss)
             print(f"{epoch + 1}/{epochs} Training Loss: {train_loss}")
 
             # Validation
             self.model.eval()
             val_loss = 0.0
+            metrics_loss = [0.0 for _ in range(n_metrics)]
             with torch.no_grad():
                 for images, masks in tqdm(
                     val_loader,
@@ -87,8 +110,15 @@ class ClothesModel:
                     leave=True,
                 ):
                     val_loss += self._val_batch(images, masks)
+                    for i, metric in enumerate(list(self.metrics.keys())):
+                        metrics_loss[i] += self._val_batch(images, masks, loss_fn=self.metrics[metric])
 
             val_loss /= len(val_loader)
+            for i in range(len(metrics_loss)):
+                metrics_loss[i] /= len(val_loader)
+            history["val_loss"].append(train_loss)
+            for i, metric in enumerate(list(self.metrics.keys())):
+                history["val_metrics"][metric].append(metrics_loss[i])
             print(f"{epoch + 1}/{epochs} Validation Loss: {val_loss}")
 
             # Callbacks
@@ -105,6 +135,8 @@ class ClothesModel:
 
         if load_best_at_end and best_model_dict:
             self.model.load_state_dict(best_model_dict)
+    
+        return history
 
     @torch.no_grad()
     def evaluate(self, test_loader: DataLoader) -> float:
@@ -142,11 +174,14 @@ class ClothesModel:
 
         return loss.item()
 
-    def _val_batch(self, images: Any, masks: Any) -> float:
+    def _val_batch(self, images: Any, masks: Any, loss_fn=None) -> float:
         assert self.loss_fn
 
         images, masks = images.to(self.device), masks.to(self.device)
         outputs = self.model(images)
-        loss = self.loss_fn(outputs, masks)
+        if loss_fn is None:
+            loss = self.loss_fn(outputs, masks)
+        else:
+            loss = loss_fn(outputs, masks)
 
         return loss.item()

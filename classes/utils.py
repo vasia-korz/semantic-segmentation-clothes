@@ -1,9 +1,13 @@
+from typing import Any
+
 import matplotlib.pyplot as plt
-from matplotlib.colors import hsv_to_rgb, ListedColormap
 import numpy as np
 import torch
+from matplotlib.colors import ListedColormap, hsv_to_rgb
+from torch._prims_common import DeviceLikeType
 
-def visualize(pair):
+
+def visualize(pair: tuple) -> None:
     image, mask = pair
 
     image = image.permute(1, 2, 0)
@@ -12,16 +16,22 @@ def visualize(pair):
 
     ax[0].imshow(image)
     ax[0].set_title("Image")
-    ax[0].axis('off')
+    ax[0].axis("off")
 
     ax[1].imshow(mask)
     ax[1].set_title("Mask")
-    ax[1].axis('off')
-    
+    ax[1].axis("off")
+
     plt.show()
 
 
-def visualize_prediction(model, dataset_sample, device, class_labels=None, num_classes=59):
+def visualize_prediction(
+    model: Any,
+    dataset_sample: tuple,
+    device: DeviceLikeType,
+    class_labels: dict | None = None,
+    num_classes: int = 59,
+) -> None:
     image, mask = dataset_sample
 
     image = image.unsqueeze(0).to(device)
@@ -33,7 +43,12 @@ def visualize_prediction(model, dataset_sample, device, class_labels=None, num_c
 
     hues = np.linspace(0, 1, num_classes, endpoint=False)
     saturation, value = 0.65, 0.85
-    colors = hsv_to_rgb(np.stack([hues, np.full_like(hues, saturation), np.full_like(hues, value)], axis=1))
+    colors = hsv_to_rgb(
+        np.stack(
+            [hues, np.full_like(hues, saturation), np.full_like(hues, value)],
+            axis=1,
+        )
+    )
     colors[0] = hsv_to_rgb([0, 0.1, 0.99])
     colormap = ListedColormap(colors)
 

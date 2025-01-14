@@ -1,4 +1,4 @@
-# People Clothing Segmentation 
+# People Clothing Segmentation
 
 The dataset as well as the descriptiont of the problem can be found on [Kaggle](https://www.kaggle.com/datasets/rajkumarl/people-clothing-segmentation).
 

@@ -116,7 +116,7 @@ class ClothesModel:
             val_loss /= len(val_loader)
             for i in range(len(metrics_loss)):
                 metrics_loss[i] /= len(val_loader)
-            history["val_loss"].append(train_loss)
+            history["val_loss"].append(val_loss)
             for i, metric in enumerate(list(self.metrics.keys())):
                 history["val_metrics"][metric].append(metrics_loss[i])
 

@@ -1,4 +1,3 @@
-main.ipynb
 .venv/
 *.egg-info/
 /classes/__pycache__
